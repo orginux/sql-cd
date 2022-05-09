@@ -43,7 +43,7 @@ services:
         - clickhouse-server
       depends_on:
         - clickhouse-server
-      command: -host clickhouse-server -git-url https://github.com/orginux/clickhouse-test-env.git -git-path queries/ -timeout 10 -daemon -username admin -password 1212qwe -verbose
+      command: -host clickhouse-server -git-url https://github.com/orginux/clickhouse-test-env.git -git-path queries/ -timeout 10 -daemon -username admin -password 1212qwe
 
 
 networks:
