@@ -1,0 +1,18 @@
+<clickhouse>
+    <users>
+        <admin>
+            <password>1212qwe</password>
+            <networks>
+                <ip>::/0</ip>
+            </networks>
+
+            <!-- Settings profile for user. -->
+            <profile>default</profile>
+
+            <!-- Quota for user. -->
+            <quota>default</quota>
+
+            <access_management>1</access_management>
+        </admin>
+    </users>
+</clickhouse>

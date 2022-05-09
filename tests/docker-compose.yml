@@ -1,0 +1,50 @@
+---
+version: "3"
+
+services:
+    clickhouse-server:
+      image: clickhouse/clickhouse-server:22.3.3.44
+      hostname: clickhouse-server
+      container_name: clickhouse-server
+      restart: always
+      ports:
+        - "9000:9000"
+      networks:
+        - ch-net
+      volumes:
+        - ${PWD}/config/admin.xml:/etc/clickhouse-server/users.d/admin.xml
+      ulimits:
+        nofile:
+          soft: 262144
+          hard: 262144
+      tty: true
+    clickhouse-client:
+      image: clickhouse/clickhouse-client
+      hostname: clickhouse-client
+      container_name: clickhouse-client
+      restart: on-failure
+      networks:
+        - ch-net
+      links:
+        - clickhouse-server
+      depends_on:
+        - clickhouse-server
+      command: --host clickhouse-server --user admin
+      stdin_open: true
+      tty: true
+    sql-cd:
+      build: ../
+      hostname: sql-cd
+      container_name: sql-cd
+      restart: on-failure
+      networks:
+        - ch-net
+      links:
+        - clickhouse-server
+      depends_on:
+        - clickhouse-server
+      command: -host clickhouse-server -git-url https://github.com/orginux/clickhouse-test-env.git -git-path queries/ -timeout 10 -daemon -username admin -password 1212qwe
+
+
+networks:
+    ch-net:
