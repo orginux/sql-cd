@@ -10,7 +10,7 @@ import (
 )
 
 // Clickhouse connects to the ClickHouse database via native port
-func Clickhouse(destHost string, destPort int, username, password string) (context.Context, clickhouse.Conn, error) {
+func Clickhouse(destHost string, destPort int, username, password string, dbVerboseMode bool) (context.Context, clickhouse.Conn, error) {
 
 	var (
 		ctx      context.Context
@@ -29,7 +29,7 @@ func Clickhouse(destHost string, destPort int, username, password string) (conte
 				Username: username,
 				Password: password,
 			},
-			// Debug:           true,
+			Debug:           dbVerboseMode,
 			DialTimeout:     time.Second,
 			MaxOpenConns:    10,
 			MaxIdleConns:    5,

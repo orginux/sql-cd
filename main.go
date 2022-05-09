@@ -24,12 +24,18 @@ var (
 	timeout                             int
 )
 
+// DataBase variables
+var (
+	dbVerboseMode bool
+)
+
 func init() {
 	// connection
 	flag.StringVar(&destHost, "host", "localhost", "The ClickHouse server name. You can use either the name or the IPv4 or IPv6 address")
 	flag.IntVar(&destPort, "port", 9000, "The native ClickHouse port to connect to")
 	flag.StringVar(&username, "username", "default", "The username. Default value: default")
 	flag.StringVar(&password, "password", "", "The password. Default value: empty string")
+	flag.BoolVar(&dbVerboseMode, "verbose", false, "Print query and other debugging info")
 
 	// git
 	flag.StringVar(&gitURL, "git-url", "", "URL of git repo with SQL queries")
@@ -64,7 +70,7 @@ func main() {
 
 	for {
 		// Connect to ClickHouse
-		ctx, conn, err := connect.Clickhouse(destHost, destPort, username, password)
+		ctx, conn, err := connect.Clickhouse(destHost, destPort, username, password, dbVerboseMode)
 		checkErr(err, runAsDaemon)
 
 		// Clone project
