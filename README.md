@@ -21,6 +21,8 @@
         Global command timeout (default 60)
   -username string
         The username. Default value: default (default "default")
+  -verbose
+        Print query and other debugging info
   -work-dir string
         Local path for repo with SQL queries (default "/tmp/ufo/")
 ```
