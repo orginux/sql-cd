@@ -29,7 +29,7 @@ services:
         - clickhouse-server
       depends_on:
         - clickhouse-server
-      command: --host clickhouse-server --user admin
+      command: --host clickhouse-server --user admin --password 1212qwe
       stdin_open: true
       tty: true
     sql-cd:
