@@ -1,0 +1,10 @@
+bin/
+Dockerfile
+.dockerignore
+.git
+.github
+.gitignore
+LICENSE
+Makefile
+*.md
+tests/
