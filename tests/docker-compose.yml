@@ -3,7 +3,7 @@ version: "3"
 
 services:
     clickhouse-server:
-      image: clickhouse/clickhouse-server:22.3.3.44
+      image: clickhouse/clickhouse-server:22.4.5.9
       hostname: clickhouse-server
       container_name: clickhouse-server
       restart: always
