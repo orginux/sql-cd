@@ -24,7 +24,7 @@
   -timeout int
         Global command timeout (default 60)
   -work-dir string
-        Local path for repo with SQL queries (default "/tmp/ufo/")
+        Local path for repo with SQL queries (default "/tmp/sql-cd/")
 ```
 
 ## Build
