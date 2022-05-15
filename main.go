@@ -14,28 +14,33 @@ import (
 	logging "github.com/orginux/sql-cd/cmd/logging"
 )
 
-var (
-	destHost                            string
-	destPort                            int
-	username, password                  string
-	gitURL, gitBranch, gitPath, gitDest string
-	workDir                             string
-	runAsDaemon                         bool
-	timeout                             int
-)
-
 // DataBase variables
 var (
-	dbVerboseMode bool
+	dbHost                 string
+	dbPort                 int
+	dbUsername, dbPassword string
+	dbVerboseMode          bool
+)
+
+// Git variables
+var (
+	gitURL, gitBranch, gitPath, gitDest string
+	workDir                             string
+)
+
+// Service variables
+var (
+	runAsDaemon bool
+	timeout     int
 )
 
 func init() {
 	// connection
-	flag.StringVar(&destHost, "host", "localhost", "The ClickHouse server name. You can use either the name or the IPv4 or IPv6 address")
-	flag.IntVar(&destPort, "port", 9000, "The native ClickHouse port to connect to")
-	flag.StringVar(&username, "username", "default", "The username. Default value: default")
-	flag.StringVar(&password, "password", "", "The password. Default value: empty string")
-	flag.BoolVar(&dbVerboseMode, "verbose", false, "Print query and other debugging info")
+	flag.StringVar(&dbHost, "db-host", "localhost", "The ClickHouse server name. You can use either the name or the IPv4 or IPv6 address")
+	flag.IntVar(&dbPort, "db-port", 9000, "The native ClickHouse port to connect to")
+	flag.StringVar(&dbUsername, "db-username", "default", "The username. Default value: default")
+	flag.StringVar(&dbPassword, "db-password", "", "The password. Default value: empty string")
+	flag.BoolVar(&dbVerboseMode, "db-verbose", false, "Print query and other debugging info")
 
 	// git
 	flag.StringVar(&gitURL, "git-url", "", "URL of git repo with SQL queries")
@@ -70,7 +75,7 @@ func main() {
 
 	for {
 		// Connect to ClickHouse
-		ctx, conn, err := connect.Clickhouse(destHost, destPort, username, password, dbVerboseMode)
+		ctx, conn, err := connect.Clickhouse(dbHost, dbPort, dbUsername, dbPassword, dbVerboseMode)
 		checkErr(err, runAsDaemon)
 
 		// Clone project
