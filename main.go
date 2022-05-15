@@ -41,7 +41,7 @@ func init() {
 	flag.StringVar(&gitURL, "git-url", "", "URL of git repo with SQL queries")
 	flag.StringVar(&gitBranch, "git-branch", "main", "Branch of git repo to use for SQL queries")
 	flag.StringVar(&gitPath, "git-path", "", "Path within git repo to locate SQL queries")
-	flag.StringVar(&workDir, "work-dir", "/tmp/ufo/", "Local path for repo with SQL queries")
+	flag.StringVar(&workDir, "work-dir", "/tmp/sql-cd/", "Local path for repo with SQL queries")
 	// flag.StringVar(&gitDest, "git-dest", "", "local path for repo with SQL queries")
 
 	// daemon
