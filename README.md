@@ -1,6 +1,7 @@
 # SQL as a code
 [![Go](https://github.com/orginux/sql-cd/actions/workflows/go.yml/badge.svg?branch=main)](https://github.com/orginux/sql-cd/actions/workflows/go.yml)
 
+
 ## Usage
 ```bash
   -daemon
