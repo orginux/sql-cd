@@ -31,6 +31,8 @@ func Clone(dir, gitUrl, branch string) error {
 		logging.Warning.Printf("generate publickeys failed: %s\n", err.Error())
 	}
 
+	logging.Debug.Printf("URL: %s", gitUrl)
+
 	_, err = git.PlainClone(dir, false, &git.CloneOptions{
 		URL:           gitUrl,
 		ReferenceName: plumbing.ReferenceName(fmt.Sprintf("refs/heads/%s", branch)),
