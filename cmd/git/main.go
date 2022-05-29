@@ -69,11 +69,6 @@ func sshKeyscan(host, knownHostsPath string) error {
 		}
 	}
 
-	// os.Setenv("SSH_KNOWN_HOSTS", knownHostsPath)
-	// logging.Debug.Println(os.Getenv("SSH_KNOWN_HOSTS"))
-	// cmd.Env = append(os.Environ())
-	//argHost := fmt.Sprintf("-H %s", host)
-	//argKnownHostsFile := fmt.Sprintf(">> %s", knownHostsPath)
 	logging.Debug.Printf("ssh-keyscan %s >> %s", host, knownHostsPath)
 	cmd := exec.Command("ssh-keyscan", "-H", host)
 
