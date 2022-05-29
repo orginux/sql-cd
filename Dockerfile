@@ -8,5 +8,5 @@ RUN CGO_ENABLED=0 GOOS=linux \
 FROM golang:1.18.2-bullseye
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=builder /go/bin/sql-cd /go/bin/sql-cd
-COPY github /tmp/key
+# COPY github /tmp/key
 ENTRYPOINT ["/go/bin/sql-cd"]
