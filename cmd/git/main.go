@@ -2,7 +2,11 @@ package git
 
 import (
 	"fmt"
+	"net/url"
 	"os"
+	"os/exec"
+	"path/filepath"
+	"strings"
 
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
@@ -33,6 +37,13 @@ func Clone(dir, gitUrl, branch string) error {
 
 	logging.Debug.Printf("URL: %s", gitUrl)
 
+	gitHostname, err := getHostname(gitUrl)
+	if err != nil {
+		logging.Error.Printf("Error parse url: %v", err)
+	}
+
+	sshKeyscan(gitHostname, "/etc/ssh/ssh_known_hosts")
+
 	_, err = git.PlainClone(dir, false, &git.CloneOptions{
 		URL:           gitUrl,
 		ReferenceName: plumbing.ReferenceName(fmt.Sprintf("refs/heads/%s", branch)),
@@ -44,4 +55,63 @@ func Clone(dir, gitUrl, branch string) error {
 		return err
 	}
 	return nil
+}
+
+// ssh-keyscan -H github.com > /ssh_known_hosts
+func sshKeyscan(host, knownHostsPath string) error {
+	// /etc/ssh/ssh_known_hosts
+	knownHostsDir := filepath.Dir(knownHostsPath)
+	logging.Debug.Printf("knownHostsDir: %s", knownHostsDir)
+	if _, err := os.Stat(knownHostsDir); os.IsNotExist(err) {
+		err := os.MkdirAll(knownHostsDir, 0440)
+		if err != nil {
+			return err
+		}
+	}
+
+	// os.Setenv("SSH_KNOWN_HOSTS", knownHostsPath)
+	// logging.Debug.Println(os.Getenv("SSH_KNOWN_HOSTS"))
+	// cmd.Env = append(os.Environ())
+	//argHost := fmt.Sprintf("-H %s", host)
+	//argKnownHostsFile := fmt.Sprintf(">> %s", knownHostsPath)
+	logging.Debug.Printf("ssh-keyscan %s >> %s", host, knownHostsPath)
+	cmd := exec.Command("ssh-keyscan", "-H", host)
+
+	stdout, err := cmd.Output()
+	if err != nil {
+		logging.Error.Printf("sshKeyscan: %v", err.Error())
+		return err
+	}
+
+	logging.Debug.Printf("sshKeyscan: %s", string(stdout))
+
+	knownHostsFile, err := os.Create(knownHostsPath)
+	if err != nil {
+		logging.Error.Printf("create file: %v", err)
+		return err
+	}
+	defer knownHostsFile.Close()
+
+	_, err = knownHostsFile.Write(stdout)
+	if err != nil {
+		logging.Error.Printf("WriteString: %v", err)
+		return err
+	}
+
+	return nil
+}
+
+// git@github.com:orginux/clickhouse-test-env.git
+func getHostname(sourceUrl string) (string, error) {
+	withoutPointsURL := strings.ReplaceAll(sourceUrl, ":", "/")
+	logging.Debug.Printf("withoutPointsURL: %s", withoutPointsURL)
+	withoutGitURL := strings.ReplaceAll(withoutPointsURL, "git@", "https://")
+	logging.Debug.Printf("withoutGitURL: %s", withoutGitURL)
+	u, err := url.Parse(withoutGitURL)
+	if err != nil {
+		logging.Debug.Printf("Error URL: %v", err)
+		return "", err
+	}
+	logging.Debug.Printf("Result URL: %v", u.Host)
+	return u.Host, nil
 }
