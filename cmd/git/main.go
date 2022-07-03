@@ -24,7 +24,7 @@ func Clone(dir, gitUrl, branch, privateKeyFile string) error {
 
 	_, err := os.Stat(privateKeyFile)
 	if err != nil {
-		return fmt.Errorf("%v, please check value for --private-key-file", err)
+		return fmt.Errorf("%v, check the value of the -private-key-file flag", err)
 	}
 
 	// Clone the given repository to the given directory

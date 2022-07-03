@@ -21,6 +21,8 @@
         Path within git repo to locate SQL queries
   -git-url string
         URL of git repo with SQL queries
+  -private-key-file string
+        Local path for the ssh private key (default "/tmp/key")
   -timeout int
         Global command timeout (default 60)
   -work-dir string
