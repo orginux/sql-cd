@@ -24,8 +24,9 @@ var (
 
 // Git variables
 var (
-	gitURL, gitBranch, gitPath, gitDest string
-	workDir                             string
+	gitURL, gitBranch, gitPrivateKeyFile string
+	gitPath, gitDest                     string
+	workDir                              string
 )
 
 // Service variables
@@ -47,6 +48,7 @@ func init() {
 	flag.StringVar(&gitBranch, "git-branch", "main", "Branch of git repo to use for SQL queries")
 	flag.StringVar(&gitPath, "git-path", "", "Path within git repo to locate SQL queries")
 	flag.StringVar(&workDir, "work-dir", "/tmp/sql-cd/", "Local path for repo with SQL queries")
+	flag.StringVar(&gitPrivateKeyFile, "private-key-file", "/tmp/key", "Local path for the ssh private key")
 	// flag.StringVar(&gitDest, "git-dest", "", "local path for repo with SQL queries")
 
 	// daemon
@@ -79,7 +81,7 @@ func main() {
 		checkErr(err, runAsDaemon)
 
 		// Clone project
-		err = git.Clone(gitDest, gitURL, gitBranch)
+		err = git.Clone(gitDest, gitURL, gitBranch, gitPrivateKeyFile)
 		checkErr(err, runAsDaemon)
 
 		// Apply SQL files

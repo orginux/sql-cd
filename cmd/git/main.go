@@ -15,12 +15,11 @@ import (
 )
 
 // Clone clones a git project into a directory
-func Clone(dir, gitUrl, branch string) error {
+func Clone(dir, gitUrl, branch, privateKeyFile string) error {
 
 	// Clean up
 	os.RemoveAll(dir)
 
-	privateKeyFile := "/tmp/key"
 	password := ""
 
 	_, err := os.Stat(privateKeyFile)
