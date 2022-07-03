@@ -3,25 +3,40 @@ package git
 import (
 	"fmt"
 	"os"
+	"strings"
 
-	"github.com/go-git/go-git/v5"
-	"github.com/go-git/go-git/v5/plumbing"
+	"github.com/orginux/sql-cd/cmd/logging"
 )
 
-// Clone clones a git project into a directory
-func Clone(dir, gitUrl, branch string) error {
+func Clone(gitDest, gitURL, gitBranch, gitPrivateKeyFile string, verbose bool) error {
 
-	// Clean up
-	os.RemoveAll(dir)
-
-	_, err := git.PlainClone(dir, false, &git.CloneOptions{
-		URL:           gitUrl,
-		ReferenceName: plumbing.ReferenceName(fmt.Sprintf("refs/heads/%s", branch)),
-		SingleBranch:  true,
-		Progress:      os.Stdout,
-	})
-	if err != nil {
-		return err
+	// Clean up before clone
+	if verbose {
+		logging.Info.Printf("clean-up directroy %s", gitDest)
 	}
+
+	err := os.RemoveAll(gitDest)
+	if err != nil {
+		return fmt.Errorf("Cannot remove directory %s: %v", gitURL, err)
+	}
+
+	if verbose {
+		logging.Info.Printf("git clone %s ", gitURL)
+	}
+
+	if strings.HasPrefix(gitURL, "https://") {
+		err := cloneHTTPS(gitDest, gitURL, gitBranch)
+		if err != nil {
+			return err
+		}
+	} else if strings.HasPrefix(gitURL, "git@") {
+		err := cloneSSH(gitDest, gitURL, gitBranch, gitPrivateKeyFile)
+		if err != nil {
+			return err
+		}
+	} else {
+		return fmt.Errorf("Unsupported protocol: %s", gitURL)
+	}
+
 	return nil
 }
