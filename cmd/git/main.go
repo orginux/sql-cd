@@ -99,6 +99,5 @@ func getHostname(sourceUrl string) (string, error) {
 		logging.Debug.Printf("Error URL: %v", err)
 		return "", err
 	}
-	logging.Debug.Printf("Result URL: %v", u.Host)
 	return u.Host, nil
 }
