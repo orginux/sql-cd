@@ -70,21 +70,18 @@ func sshKeyscan(host, knownHostsPath string) error {
 
 	stdout, err := cmd.Output()
 	if err != nil {
-		logging.Error.Printf("sshKeyscan: %v", err.Error())
-		return err
+		return fmt.Errorf("sshKeyscan: %v", err)
 	}
 
 	knownHostsFile, err := os.Create(knownHostsPath)
 	if err != nil {
-		logging.Error.Printf("create file: %v", err)
-		return err
+		return fmt.Errorf("create knownHosts file: %v", err)
 	}
 	defer knownHostsFile.Close()
 
 	_, err = knownHostsFile.Write(stdout)
 	if err != nil {
-		logging.Error.Printf("WriteString: %v", err)
-		return err
+		return fmt.Errorf("add to knownHosts: %v", err)
 	}
 
 	return nil
