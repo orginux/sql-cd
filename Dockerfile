@@ -5,7 +5,7 @@ COPY . .
 RUN CGO_ENABLED=0 GOOS=linux \
         go build -o ${GOPATH}/bin/sql-cd
 
-FROM golang:1.18.2-bullseye
+FROM golang:1.18.3-stretch
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=builder /go/bin/sql-cd /go/bin/sql-cd
 # COPY github /tmp/key
