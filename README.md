@@ -25,6 +25,8 @@
         Local path for the ssh private key (default "/tmp/key")
   -timeout int
         Global command timeout (default 60)
+  -verbose
+        Makes sql-cd verbose during the operation
   -work-dir string
         Local path for repo with SQL queries (default "/tmp/sql-cd/")
 ```

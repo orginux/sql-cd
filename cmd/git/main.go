@@ -4,12 +4,25 @@ import (
 	"fmt"
 	"os"
 	"strings"
+
+	"github.com/orginux/sql-cd/cmd/logging"
 )
 
-func Clone(gitDest, gitURL, gitBranch, gitPrivateKeyFile string) error {
+func Clone(gitDest, gitURL, gitBranch, gitPrivateKeyFile string, verbose bool) error {
 
 	// Clean up before clone
-	os.RemoveAll(gitDest)
+	if verbose {
+		logging.Info.Printf("clean-up directroy %s", gitDest)
+	}
+
+	err := os.RemoveAll(gitDest)
+	if err != nil {
+		return fmt.Errorf("Cannot remove directory %s: %v", gitURL, err)
+	}
+
+	if verbose {
+		logging.Info.Printf("git clone %s ", gitURL)
+	}
 
 	if strings.HasPrefix(gitURL, "https://") {
 		err := cloneHTTPS(gitDest, gitURL, gitBranch)

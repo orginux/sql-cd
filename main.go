@@ -33,6 +33,7 @@ var (
 var (
 	runAsDaemon bool
 	timeout     int
+	verbose     bool
 )
 
 func init() {
@@ -54,6 +55,7 @@ func init() {
 	// daemon
 	flag.BoolVar(&runAsDaemon, "daemon", false, "Run as daemon")
 	flag.IntVar(&timeout, "timeout", 60, "Global command timeout")
+	flag.BoolVar(&verbose, "verbose", false, "Makes sql-cd verbose during the operation")
 
 	flag.Parse()
 }
@@ -81,7 +83,7 @@ func main() {
 		checkErr(err, runAsDaemon)
 
 		// Clone project
-		err = git.Clone(gitDest, gitURL, gitBranch, gitPrivateKeyFile)
+		err = git.Clone(gitDest, gitURL, gitBranch, gitPrivateKeyFile, verbose)
 		checkErr(err, runAsDaemon)
 
 		// Apply SQL files
@@ -97,6 +99,9 @@ func main() {
 		}
 
 		// Wait before next iteration
+		if verbose {
+			logging.Debug.Printf("Timeout %d sec\n", timeout)
+		}
 		time.Sleep(time.Duration(timeout) * time.Second)
 	}
 }

@@ -15,7 +15,7 @@ import (
 )
 
 // Clones a git project into a directory via SSH
-func cloneSSH(dir, gitUrl, branch, privateKeyFile string) error {
+func cloneSSH(gitDest, gitUrl, branch, privateKeyFile string) error {
 
 	password := ""
 
@@ -25,7 +25,6 @@ func cloneSSH(dir, gitUrl, branch, privateKeyFile string) error {
 	}
 
 	// Clone the given repository to the given directory
-	logging.Info.Printf("git clone %s ", gitUrl)
 	publicKeys, err := ssh.NewPublicKeysFromFile("git", privateKeyFile, password)
 	if err != nil {
 		return fmt.Errorf("generate publickeys failed: %v\n", err.Error())
@@ -38,12 +37,12 @@ func cloneSSH(dir, gitUrl, branch, privateKeyFile string) error {
 
 	sshKeyscan(gitHostname, "/etc/ssh/ssh_known_hosts")
 
-	_, err = git.PlainClone(dir, false, &git.CloneOptions{
+	_, err = git.PlainClone(gitDest, false, &git.CloneOptions{
 		URL:           gitUrl,
 		ReferenceName: plumbing.ReferenceName(fmt.Sprintf("refs/heads/%s", branch)),
 		SingleBranch:  true,
-		Progress:      os.Stdout,
-		Auth:          publicKeys,
+		//		Progress:      os.Stdout,
+		Auth: publicKeys,
 	})
 	if err != nil {
 		return err
@@ -83,7 +82,7 @@ func sshKeyscan(host, knownHostsPath string) error {
 	return nil
 }
 
-// git@github.com:orginux/clickhouse-test-env.git
+// Retrieve the hostname from url like git@github.com:orginux/clickhouse-test-env.git
 func getHostname(sourceUrl string) (string, error) {
 	withoutPointsURL := strings.ReplaceAll(sourceUrl, ":", "/")
 	withoutGitURL := strings.ReplaceAll(withoutPointsURL, "git@", "https://")
