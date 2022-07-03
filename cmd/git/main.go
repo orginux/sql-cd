@@ -25,21 +25,19 @@ func Clone(dir, gitUrl, branch string) error {
 
 	_, err := os.Stat(privateKeyFile)
 	if err != nil {
-		logging.Warning.Printf("read file %s failed %s\n", privateKeyFile, err)
+		return fmt.Errorf("%v, please check value for --private-key-file", err)
 	}
 
 	// Clone the given repository to the given directory
 	logging.Info.Printf("git clone %s ", gitUrl)
 	publicKeys, err := ssh.NewPublicKeysFromFile("git", privateKeyFile, password)
 	if err != nil {
-		logging.Warning.Printf("generate publickeys failed: %s\n", err.Error())
+		return fmt.Errorf("generate publickeys failed: %v\n", err.Error())
 	}
-
-	logging.Debug.Printf("URL: %s", gitUrl)
 
 	gitHostname, err := getHostname(gitUrl)
 	if err != nil {
-		logging.Error.Printf("Error parse url: %v", err)
+		return fmt.Errorf("Error parse url: %v", err)
 	}
 
 	sshKeyscan(gitHostname, "/etc/ssh/ssh_known_hosts")
@@ -61,7 +59,6 @@ func Clone(dir, gitUrl, branch string) error {
 func sshKeyscan(host, knownHostsPath string) error {
 	// /etc/ssh/ssh_known_hosts
 	knownHostsDir := filepath.Dir(knownHostsPath)
-	logging.Debug.Printf("knownHostsDir: %s", knownHostsDir)
 	if _, err := os.Stat(knownHostsDir); os.IsNotExist(err) {
 		err := os.MkdirAll(knownHostsDir, 0440)
 		if err != nil {
@@ -69,7 +66,6 @@ func sshKeyscan(host, knownHostsPath string) error {
 		}
 	}
 
-	logging.Debug.Printf("ssh-keyscan %s >> %s", host, knownHostsPath)
 	cmd := exec.Command("ssh-keyscan", "-H", host)
 
 	stdout, err := cmd.Output()
@@ -77,8 +73,6 @@ func sshKeyscan(host, knownHostsPath string) error {
 		logging.Error.Printf("sshKeyscan: %v", err.Error())
 		return err
 	}
-
-	logging.Debug.Printf("sshKeyscan: %s", string(stdout))
 
 	knownHostsFile, err := os.Create(knownHostsPath)
 	if err != nil {
@@ -99,9 +93,7 @@ func sshKeyscan(host, knownHostsPath string) error {
 // git@github.com:orginux/clickhouse-test-env.git
 func getHostname(sourceUrl string) (string, error) {
 	withoutPointsURL := strings.ReplaceAll(sourceUrl, ":", "/")
-	logging.Debug.Printf("withoutPointsURL: %s", withoutPointsURL)
 	withoutGitURL := strings.ReplaceAll(withoutPointsURL, "git@", "https://")
-	logging.Debug.Printf("withoutGitURL: %s", withoutGitURL)
 	u, err := url.Parse(withoutGitURL)
 	if err != nil {
 		logging.Debug.Printf("Error URL: %v", err)
