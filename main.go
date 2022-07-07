@@ -60,21 +60,12 @@ func init() {
 	flag.Parse()
 }
 
-func checkErr(err error, runAsDaemon bool) {
-	if err != nil {
-		// Daemon doesn't exit when catch an error
-		if !runAsDaemon {
-			log.Fatal(err)
-		}
-		logging.Error.Println(err)
-	}
-
-}
-
 func main() {
-	// Set work dir
-	subPath := strings.ReplaceAll(gitURL, "https://", "")
-	gitDest := filepath.Join(workDir, subPath, gitBranch)
+	gitDest := getWorkDirName(workDir, gitURL, gitBranch)
+
+	if verbose {
+		logging.Debug.Printf("gitDest: %s", gitDest)
+	}
 	queriesDir := filepath.Join(gitDest, gitPath)
 
 	for {
@@ -87,7 +78,8 @@ func main() {
 		checkErr(err, runAsDaemon)
 
 		// Apply SQL files
-		apply.QueriesFromDir(ctx, conn, queriesDir)
+		err = apply.QueriesFromDir(ctx, conn, queriesDir)
+		checkErr(err, runAsDaemon)
 
 		// Close connection
 		conn.Close()
@@ -104,4 +96,29 @@ func main() {
 		}
 		time.Sleep(time.Duration(timeout) * time.Second)
 	}
+}
+
+func getWorkDirName(subPaths ...string) string {
+
+	var path string
+
+	for _, subPath := range subPaths {
+		path = filepath.Join(path, subPath)
+		logging.Debug.Println(path)
+	}
+
+	replacer := strings.NewReplacer("https://", "", ":", "")
+
+	return replacer.Replace(path)
+}
+
+func checkErr(err error, runAsDaemon bool) {
+	if err != nil {
+		// Daemon doesn't exit when catch an error
+		if !runAsDaemon {
+			log.Fatal(err)
+		}
+		logging.Error.Println(err)
+	}
+
 }
