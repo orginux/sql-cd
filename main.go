@@ -60,21 +60,12 @@ func init() {
 	flag.Parse()
 }
 
-func checkErr(err error, runAsDaemon bool) {
-	if err != nil {
-		// Daemon doesn't exit when catch an error
-		if !runAsDaemon {
-			log.Fatal(err)
-		}
-		logging.Error.Println(err)
-	}
-
-}
-
 func main() {
-	// Set work dir
-	subPath := strings.ReplaceAll(gitURL, "https://", "")
-	gitDest := filepath.Join(workDir, subPath, gitBranch)
+	gitDest := getWorkDirName(workDir, gitURL, gitBranch)
+
+	if verbose {
+		logging.Debug.Printf("gitDest: %s", gitDest)
+	}
 	queriesDir := filepath.Join(gitDest, gitPath)
 
 	for {
@@ -104,4 +95,29 @@ func main() {
 		}
 		time.Sleep(time.Duration(timeout) * time.Second)
 	}
+}
+
+func getWorkDirName(subPaths ...string) string {
+
+	var dir string
+
+	for _, subPath := range subPaths {
+		dir = filepath.Join(dir, subPath)
+		logging.Debug.Println(dir)
+	}
+
+	replacer := strings.NewReplacer("https://", "", ":", "")
+
+	return replacer.Replace(path)
+}
+
+func checkErr(err error, runAsDaemon bool) {
+	if err != nil {
+		// Daemon doesn't exit when catch an error
+		if !runAsDaemon {
+			log.Fatal(err)
+		}
+		logging.Error.Println(err)
+	}
+
 }
