@@ -25,7 +25,6 @@ func QueriesFromDir(ctx context.Context, conn clickhouse.Conn, queriesDir string
 
 	for _, fileFromDir := range queryFiles {
 		wg.Add(1)
-
 		queryFile := fileFromDir.Name()
 		go func() {
 			defer wg.Done()
