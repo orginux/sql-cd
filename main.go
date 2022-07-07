@@ -99,11 +99,11 @@ func main() {
 
 func getWorkDirName(subPaths ...string) string {
 
-	var dir string
+	var path string
 
 	for _, subPath := range subPaths {
-		dir = filepath.Join(dir, subPath)
-		logging.Debug.Println(dir)
+		path = filepath.Join(path, subPath)
+		logging.Debug.Println(path)
 	}
 
 	replacer := strings.NewReplacer("https://", "", ":", "")
