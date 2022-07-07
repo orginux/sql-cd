@@ -16,21 +16,17 @@ import (
 // QueriesFromDir applies all queries from a directory
 func QueriesFromDir(ctx context.Context, conn clickhouse.Conn, queriesDir string) error {
 
-	logging.Debug.Printf("queries directory: %s\n", queriesDir)
 	queryFiles, err := ioutil.ReadDir(queriesDir)
 	if err != nil {
-		logging.Error.Println(err)
 		return err
 	}
 
 	var wg sync.WaitGroup
 
-	logging.Debug.Printf("queryFiles: %v\n", queryFiles)
 	for _, fileFromDir := range queryFiles {
 		wg.Add(1)
 
 		queryFile := fileFromDir.Name()
-		logging.Debug.Printf("File Name: %s", queryFile)
 		go func() {
 			defer wg.Done()
 			err := applyFile(ctx, conn, filepath.Join(queriesDir, queryFile))
@@ -44,7 +40,6 @@ func QueriesFromDir(ctx context.Context, conn clickhouse.Conn, queriesDir string
 	wg.Wait()
 
 	// Remove queries after applaing
-	logging.Debug.Println("Remove directory")
 	os.RemoveAll(queriesDir)
 
 	return nil

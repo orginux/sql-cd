@@ -78,7 +78,8 @@ func main() {
 		checkErr(err, runAsDaemon)
 
 		// Apply SQL files
-		apply.QueriesFromDir(ctx, conn, queriesDir)
+		err = apply.QueriesFromDir(ctx, conn, queriesDir)
+		checkErr(err, runAsDaemon)
 
 		// Close connection
 		conn.Close()
