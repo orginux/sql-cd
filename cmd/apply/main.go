@@ -57,7 +57,10 @@ func applyFile(ctx context.Context, conn clickhouse.Conn, queryFile string) erro
 	logging.Info.Printf("File: %s, queries: %d", queryFile, len(queries))
 
 	for _, query := range queries {
-		if len(query) > 0 && query != "\n" {
+
+		query = strings.TrimSpace(query)
+
+		if len(query) > 0 && query != "\n" && !strings.HasPrefix(query, "--") {
 			err = conn.Exec(ctx, query)
 			if err != nil {
 				return fmt.Errorf("Query: %s, Error: %s", query, err)
