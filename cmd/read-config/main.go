@@ -1,7 +1,6 @@
 package config
 
 import (
-	"log"
 	"os"
 
 	"gopkg.in/yaml.v3"
@@ -27,21 +26,21 @@ type Source struct {
 
 const CONFIG_PATH = "./tests/config.yml"
 
-func ReadConfig() Config {
+func ReadConfig() (Config, error) {
 	var config Config
 
 	// Open YAML file
 	file, err := os.Open(CONFIG_PATH)
 	if err != nil {
-		log.Println(err.Error())
+		return Config{}, err
 	}
 	defer file.Close()
 
 	// Decode YAML file to struct
 	decoder := yaml.NewDecoder(file)
 	if err := decoder.Decode(&config); err != nil {
-		log.Println(err.Error())
+		return Config{}, err
 	}
 
-	return config
+	return config, nil
 }
