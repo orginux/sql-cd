@@ -104,7 +104,6 @@ func getWorkDirName(subPaths ...string) string {
 
 	for _, subPath := range subPaths {
 		path = filepath.Join(path, subPath)
-		logging.Debug.Println(path)
 	}
 
 	replacer := strings.NewReplacer("https://", "", ":", "")
