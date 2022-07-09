@@ -1,0 +1,10 @@
+---
+clusters:
+    - name: cluster-name
+      host: hostname.my
+      port: 8443
+      user: user | ENV
+      pass: pass | ENV
+      source:
+        - git-repo: http://....
+          git-path: queries/common
