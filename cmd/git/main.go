@@ -10,11 +10,6 @@ import (
 
 func Clone(gitDest, gitURL, gitBranch, gitPrivateKeyFile string, verbose bool) error {
 
-	// Clean up before clone
-	if verbose {
-		logging.Info.Printf("clean-up directroy %s", gitDest)
-	}
-
 	err := os.RemoveAll(gitDest)
 	if err != nil {
 		return fmt.Errorf("Cannot remove directory %s: %v", gitURL, err)
