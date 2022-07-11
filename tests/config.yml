@@ -7,4 +7,6 @@ clusters:
       pass: pass | ENV
       sources:
         - git-repo: http://....
-          git-path: queries/common
+          git-paths:
+            - queries/common
+            - queries/specific

@@ -20,8 +20,8 @@ type Clusters struct {
 }
 
 type Source struct {
-	GitRepo string `yaml:"git-repo"`
-	GitPath string `yaml:"git-path"`
+	GitRepo  string   `yaml:"git-repo"`
+	GitPaths []string `yaml:"git-paths"`
 }
 
 const CONFIG_PATH = "./tests/config.yml"
