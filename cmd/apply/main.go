@@ -14,7 +14,7 @@ import (
 )
 
 // QueriesFromDir applies all queries from a directory
-func QueriesFromDir(ctx context.Context, conn clickhouse.Conn, queriesDir string) error {
+func QueriesFromDir(ctx context.Context, conn clickhouse.Conn, queriesDir string, runAsDaemon bool) error {
 
 	queryFiles, err := ioutil.ReadDir(queriesDir)
 	if err != nil {
@@ -30,6 +30,9 @@ func QueriesFromDir(ctx context.Context, conn clickhouse.Conn, queriesDir string
 			defer wg.Done()
 			err := applyFile(ctx, conn, filepath.Join(queriesDir, queryFile))
 			if err != nil {
+				if !runAsDaemon {
+					logging.Error.Fatal(err)
+				}
 				// Ignore query errors
 				logging.Error.Printf("%s: %v\n", queryFile, err)
 			}
