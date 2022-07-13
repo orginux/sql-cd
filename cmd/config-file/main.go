@@ -20,17 +20,16 @@ type Clusters struct {
 }
 
 type Source struct {
-	GitRepo  string   `yaml:"git-repo"`
-	GitPaths []string `yaml:"git-paths"`
+	GitRepo   string   `yaml:"git-repo"`
+	GitBranch string   `yaml:"git-branch"`
+	GitPaths  []string `yaml:"git-paths"`
 }
 
-const CONFIG_PATH = "./tests/config.yml"
-
-func ReadConfig() (Config, error) {
+func ReadConfig(configPath string) (Config, error) {
 	var config Config
 
 	// Open YAML file
-	file, err := os.Open(CONFIG_PATH)
+	file, err := os.Open(configPath)
 	if err != nil {
 		return Config{}, err
 	}

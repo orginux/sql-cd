@@ -41,7 +41,7 @@ func cloneSSH(gitDest, gitUrl, branch, privateKeyFile string) error {
 		URL:           gitUrl,
 		ReferenceName: plumbing.ReferenceName(fmt.Sprintf("refs/heads/%s", branch)),
 		SingleBranch:  true,
-		//		Progress:      os.Stdout,
+		// Progress:      os.Stdout,
 		Auth: publicKeys,
 	})
 	if err != nil {

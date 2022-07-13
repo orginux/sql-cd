@@ -16,7 +16,7 @@ func Clone(gitDest, gitURL, gitBranch, gitPrivateKeyFile string, verbose bool) e
 	}
 
 	if verbose {
-		logging.Info.Printf("git clone %s ", gitURL)
+		logging.Debug.Printf("git clone %s ", gitURL)
 	}
 
 	if strings.HasPrefix(gitURL, "https://") {

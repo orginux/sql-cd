@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/orginux/sql-cd/cmd/apply"
+	"github.com/orginux/sql-cd/cmd/config-file"
 	connect "github.com/orginux/sql-cd/cmd/connection"
 	git "github.com/orginux/sql-cd/cmd/git"
 	logging "github.com/orginux/sql-cd/cmd/logging"
@@ -25,7 +26,7 @@ var (
 // Git variables
 var (
 	gitURL, gitBranch, gitPrivateKeyFile string
-	gitPath, gitConfigPath, gitDest      string
+	gitPath, gitDest                     string
 	workDir                              string
 )
 
@@ -34,6 +35,10 @@ var (
 	runAsDaemon bool
 	timeout     int
 	verbose     bool
+)
+
+var (
+	gitConfigLocal, gitConfigRemote string
 )
 
 func init() {
@@ -48,10 +53,13 @@ func init() {
 	flag.StringVar(&gitURL, "git-url", "", "URL of git repo with SQL queries")
 	flag.StringVar(&gitBranch, "git-branch", "main", "Branch of git repo to use for SQL queries")
 	flag.StringVar(&gitPath, "git-path", "", "Path within git repo to locate SQL queries")
-	flag.StringVar(&gitConfigPath, "git-config-path", "", "Path to config")
 	flag.StringVar(&workDir, "work-dir", "/tmp/sql-cd/", "Local path for repo with SQL queries")
 	flag.StringVar(&gitPrivateKeyFile, "private-key-file", "/tmp/key", "Local path for the ssh private key")
 	// flag.StringVar(&gitDest, "git-dest", "", "local path for repo with SQL queries")
+
+	// config
+	flag.StringVar(&gitConfigRemote, "remote-config", "", "Path to config")
+	flag.StringVar(&gitConfigLocal, "local-config", "", "Path to config")
 
 	// daemon
 	flag.BoolVar(&runAsDaemon, "daemon", false, "Run as daemon")
@@ -62,11 +70,75 @@ func init() {
 }
 
 func main() {
-	gitDest := getWorkDirName(workDir, gitURL, gitBranch)
+	for {
+		if gitConfigLocal != "" && gitConfigRemote != "" {
+			logging.Error.Fatalln("nope")
+		}
 
+		var configPath string
+
+		if gitConfigLocal != "" || gitConfigRemote != "" {
+
+			if gitConfigRemote != "" {
+				if gitURL == "" {
+					logging.Error.Fatalln("Please use -git-url flag")
+				}
+				// Clone config
+				gitDest := getWorkDirName(workDir, gitURL, gitBranch)
+				err := git.Clone(gitDest, gitURL, gitBranch, gitPrivateKeyFile, verbose)
+				checkErr(err, runAsDaemon)
+
+				configPath = filepath.Join(gitDest, gitConfigRemote)
+			} else {
+				_, err := os.Stat(gitConfigLocal)
+				checkErr(err, runAsDaemon)
+				configPath = gitConfigLocal
+			}
+
+			logging.Debug.Println("config: ", configPath)
+
+			config, err := config.ReadConfig(configPath)
+			checkErr(err, runAsDaemon)
+
+			for _, cluster := range config.Clusters {
+				logging.Debug.Println("Connect to ", cluster.Host)
+				// Connect to ClickHouse
+				ctx, conn, err := connect.Clickhouse(cluster.Host, cluster.Port, cluster.User, cluster.Pass, false)
+				checkErr(err, runAsDaemon)
+				for _, source := range cluster.Sources {
+					gitDest := getWorkDirName(workDir, gitURL, gitBranch)
+					err := git.Clone(gitDest, source.GitRepo, source.GitBranch, gitPrivateKeyFile, verbose)
+					checkErr(err, runAsDaemon)
+					for _, path := range source.GitPaths {
+						logging.Debug.Println("Apply: ", path)
+						// Apply SQL files
+						queriesDir := filepath.Join(gitDest, path)
+						err = apply.QueriesFromDir(ctx, conn, queriesDir)
+						checkErr(err, runAsDaemon)
+					}
+					// Close connection
+					conn.Close()
+					logging.Info.Printf("%s connection closed", cluster.Host)
+				}
+			}
+
+		}
+
+		// Wait before next iteration
+		if verbose {
+			logging.Debug.Printf("Timeout %d sec\n", timeout)
+		}
+		time.Sleep(time.Duration(timeout) * time.Second)
+	}
+
+	// dev
+	os.Exit(0)
+
+	gitDest := getWorkDirName(workDir, gitURL, gitBranch)
 	if verbose {
 		logging.Debug.Printf("gitDest: %s", gitDest)
 	}
+
 	queriesDir := filepath.Join(gitDest, gitPath)
 
 	for {
