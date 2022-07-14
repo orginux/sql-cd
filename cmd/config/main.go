@@ -25,7 +25,7 @@ type Source struct {
 	GitPaths  []string `yaml:"git-paths"`
 }
 
-func ReadConfig(configPath string) (Config, error) {
+func ReadConfigFile(configPath string) (Config, error) {
 	var config Config
 
 	// Open YAML file
@@ -42,4 +42,8 @@ func ReadConfig(configPath string) (Config, error) {
 	}
 
 	return config, nil
+}
+
+func GenerateConfig(repo GitVars, db DBVars) (Config, error) {
+
 }

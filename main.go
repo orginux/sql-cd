@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/orginux/sql-cd/cmd/apply"
-	"github.com/orginux/sql-cd/cmd/config-file"
+	"github.com/orginux/sql-cd/cmd/config"
 	connect "github.com/orginux/sql-cd/cmd/connection"
 	git "github.com/orginux/sql-cd/cmd/git"
 	logging "github.com/orginux/sql-cd/cmd/logging"
