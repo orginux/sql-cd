@@ -70,6 +70,8 @@ func init() {
 }
 
 func main() {
+	var configMain config.Config
+
 	for {
 		if gitConfigLocal != "" && gitConfigRemote != "" {
 			logging.Error.Fatalln("nope")
@@ -95,79 +97,68 @@ func main() {
 				configPath = gitConfigLocal
 			}
 
+			var err error
 			logging.Debug.Println("config: ", configPath)
-
-			config, err := config.ReadConfig(configPath)
+			configMain, err = config.ReadConfigFile(configPath)
 			checkErr(err, runAsDaemon)
 
-			for _, cluster := range config.Clusters {
-				logging.Debug.Println("Connect to ", cluster.Host)
-				// Connect to ClickHouse
-				ctx, conn, err := connect.Clickhouse(cluster.Host, cluster.Port, cluster.User, cluster.Pass, false)
+		} else {
+
+			// Generate config from cli parameters
+			configMain = config.Config{
+				[]config.Cluster{
+					config.Cluster{
+						Name: dbHost,
+						Host: dbHost,
+						Port: dbPort,
+						User: dbUsername,
+						Pass: dbPassword,
+						Sources: []config.Source{
+							config.Source{
+								GitRepo:   gitURL,
+								GitBranch: gitBranch,
+								GitPaths: []string{
+									gitPath,
+								},
+							},
+						},
+					},
+				},
+			}
+		}
+
+		for _, cluster := range configMain.Clusters {
+			logging.Debug.Println("Connect to ", cluster.Host)
+			// Connect to ClickHouse
+			ctx, conn, err := connect.Clickhouse(cluster.Host, cluster.Port, cluster.User, cluster.Pass, false)
+			checkErr(err, runAsDaemon)
+			for _, source := range cluster.Sources {
+				gitDest := getWorkDirName(workDir, gitURL, gitBranch)
+				err := git.Clone(gitDest, source.GitRepo, source.GitBranch, gitPrivateKeyFile, verbose)
 				checkErr(err, runAsDaemon)
-				for _, source := range cluster.Sources {
-					gitDest := getWorkDirName(workDir, gitURL, gitBranch)
-					err := git.Clone(gitDest, source.GitRepo, source.GitBranch, gitPrivateKeyFile, verbose)
+				for _, path := range source.GitPaths {
+					logging.Debug.Println("Apply: ", path)
+					// Apply SQL files
+					queriesDir := filepath.Join(gitDest, path)
+					err = apply.QueriesFromDir(ctx, conn, queriesDir, runAsDaemon)
 					checkErr(err, runAsDaemon)
-					for _, path := range source.GitPaths {
-						logging.Debug.Println("Apply: ", path)
-						// Apply SQL files
-						queriesDir := filepath.Join(gitDest, path)
-						err = apply.QueriesFromDir(ctx, conn, queriesDir)
-						checkErr(err, runAsDaemon)
-					}
-					// Close connection
-					conn.Close()
-					logging.Info.Printf("%s connection closed", cluster.Host)
 				}
+				// Close connection
+				conn.Close()
+				logging.Info.Printf("%s connection closed", cluster.Host)
 			}
 
 		}
 
-		// Wait before next iteration
-		if verbose {
-			logging.Debug.Printf("Timeout %d sec\n", timeout)
-		}
-		time.Sleep(time.Duration(timeout) * time.Second)
-	}
-
-	// dev
-	os.Exit(0)
-
-	gitDest := getWorkDirName(workDir, gitURL, gitBranch)
-	if verbose {
-		logging.Debug.Printf("gitDest: %s", gitDest)
-	}
-
-	queriesDir := filepath.Join(gitDest, gitPath)
-
-	for {
-		// Connect to ClickHouse
-		ctx, conn, err := connect.Clickhouse(dbHost, dbPort, dbUsername, dbPassword, dbVerboseMode)
-		checkErr(err, runAsDaemon)
-
-		// Clone project
-		err = git.Clone(gitDest, gitURL, gitBranch, gitPrivateKeyFile, verbose)
-		checkErr(err, runAsDaemon)
-
-		// Apply SQL files
-		err = apply.QueriesFromDir(ctx, conn, queriesDir, runAsDaemon)
-		checkErr(err, runAsDaemon)
-
-		// Close connection
-		conn.Close()
-		logging.Info.Println("Connection closed")
-
-		// Exit if run once
-		if !runAsDaemon {
-			os.Exit(0)
-		}
+		// dev
+		os.Exit(0)
 
 		// Wait before next iteration
 		if verbose {
 			logging.Debug.Printf("Timeout %d sec\n", timeout)
 		}
 		time.Sleep(time.Duration(timeout) * time.Second)
+
 	}
 }
 

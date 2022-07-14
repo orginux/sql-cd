@@ -7,10 +7,10 @@ import (
 )
 
 type Config struct {
-	Clusters []Clusters `yaml:"clusters"`
+	Clusters []Cluster `yaml:"clusters"`
 }
 
-type Clusters struct {
+type Cluster struct {
 	Name    string   `yaml:"name"`
 	Host    string   `yaml:"host"`
 	Port    int      `yaml:"port"`
@@ -42,8 +42,4 @@ func ReadConfigFile(configPath string) (Config, error) {
 	}
 
 	return config, nil
-}
-
-func GenerateConfig(repo GitVars, db DBVars) (Config, error) {
-
 }
