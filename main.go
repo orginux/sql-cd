@@ -15,7 +15,7 @@ import (
 	logging "github.com/orginux/sql-cd/cmd/logging"
 )
 
-// DataBase variables
+// DB variables
 var (
 	dbHost                 string
 	dbPort                 int
@@ -74,6 +74,7 @@ func main() {
 
 	for {
 		if gitConfigLocal != "" && gitConfigRemote != "" {
+			// TODO fix the error message 1
 			logging.Error.Fatalln("nope")
 		}
 
@@ -83,6 +84,7 @@ func main() {
 
 			if gitConfigRemote != "" {
 				if gitURL == "" {
+					// TODO fix the error message 2
 					logging.Error.Fatalln("Please use -git-url flag")
 				}
 				// Clone config
@@ -137,7 +139,10 @@ func main() {
 				err := git.Clone(gitDest, source.GitRepo, source.GitBranch, gitPrivateKeyFile, verbose)
 				checkErr(err, runAsDaemon)
 				for _, path := range source.GitPaths {
+
+					// TODO remove the debug log
 					logging.Debug.Println("Apply: ", path)
+
 					// Apply SQL files
 					queriesDir := filepath.Join(gitDest, path)
 					err = apply.QueriesFromDir(ctx, conn, queriesDir, runAsDaemon)
@@ -150,18 +155,17 @@ func main() {
 
 		}
 
-		// dev
-		os.Exit(0)
-
 		// Wait before next iteration
 		if verbose {
 			logging.Debug.Printf("Timeout %d sec\n", timeout)
 		}
+		// TODO read the value form config
 		time.Sleep(time.Duration(timeout) * time.Second)
 
 	}
 }
 
+// Generate a work dir path
 func getWorkDirName(subPaths ...string) string {
 
 	var path string
