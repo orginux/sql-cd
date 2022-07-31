@@ -1,0 +1,52 @@
+---
+version: "3"
+
+services:
+    clickhouse-server:
+      image: clickhouse/clickhouse-server:22.3.9.19
+      hostname: clickhouse-server
+      container_name: clickhouse-server
+      restart: always
+      ports:
+        - "9000:9000"
+      networks:
+        - ch-net
+      volumes:
+        - ../ch-config/admin.xml:/etc/clickhouse-server/users.d/admin.xml
+      ulimits:
+        nofile:
+          soft: 262144
+          hard: 262144
+      tty: true
+    clickhouse-client:
+      image: clickhouse/clickhouse-client
+      hostname: clickhouse-client
+      container_name: clickhouse-client
+      restart: on-failure
+      networks:
+        - ch-net
+      links:
+        - clickhouse-server
+      depends_on:
+        - clickhouse-server
+      command: --host clickhouse-server --user admin --password 1212qwe
+      stdin_open: true
+      tty: true
+    sql-cd:
+      build: ../../
+      hostname: sql-cd
+      container_name: sql-cd
+      restart: on-failure
+      networks:
+        - ch-net
+      links:
+        - clickhouse-server
+      depends_on:
+        - clickhouse-server
+      environment:
+        CH_USER: admin
+        CH_PASS: 1212qwe
+      command: -git-url git@github.com:orginux/sql-cd-test.git -remote-config config.yml
+
+networks:
+    ch-net:
