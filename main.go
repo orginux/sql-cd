@@ -131,8 +131,29 @@ func main() {
 
 		for _, cluster := range configMain.Clusters {
 			logging.Debug.Println("Connect to ", cluster.Host)
+
+			var chUser, chPass string
+
+			if strings.HasPrefix(cluster.User, "$") || strings.HasPrefix(cluster.Pass, "$") {
+
+				if strings.HasPrefix(cluster.User, "$") {
+					chUserEnvName := strings.TrimPrefix(cluster.User, "$")
+					chUser = os.Getenv(chUserEnvName)
+				} else {
+					chUser = cluster.User
+				}
+				if strings.HasPrefix(cluster.Pass, "$") {
+					chPassEnvName := strings.TrimPrefix(cluster.Pass, "$")
+					chPass = os.Getenv(chPassEnvName)
+				} else {
+					chPass = cluster.Pass
+				}
+
+			}
+			logging.Debug.Println("CH_USER: ", chUser)
+
 			// Connect to ClickHouse
-			ctx, conn, err := connect.Clickhouse(cluster.Host, cluster.Port, cluster.User, cluster.Pass, false)
+			ctx, conn, err := connect.Clickhouse(cluster.Host, cluster.Port, chUser, chPass, false)
 			checkErr(err, runAsDaemon)
 			for _, source := range cluster.Sources {
 				gitDest := getWorkDirName(workDir, gitURL, gitBranch)
