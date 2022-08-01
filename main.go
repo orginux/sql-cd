@@ -74,8 +74,7 @@ func main() {
 
 	for {
 		if gitConfigLocal != "" && gitConfigRemote != "" {
-			// TODO fix the error message 1
-			logging.Error.Fatalln("nope")
+			logging.Error.Fatalln("Choose only one configuration source")
 		}
 
 		var configPath string
@@ -84,8 +83,7 @@ func main() {
 
 			if gitConfigRemote != "" {
 				if gitURL == "" {
-					// TODO fix the error message 2
-					logging.Error.Fatalln("Please use -git-url flag")
+					logging.Error.Fatalln("Please define Git URL via config file")
 				}
 				// Clone config
 				gitDest := getWorkDirName(workDir, gitURL, gitBranch)
@@ -100,7 +98,6 @@ func main() {
 			}
 
 			var err error
-			logging.Debug.Println("config: ", configPath)
 			configMain, err = config.ReadConfigFile(configPath)
 			checkErr(err, runAsDaemon)
 
@@ -130,7 +127,6 @@ func main() {
 		}
 
 		for _, cluster := range configMain.Clusters {
-			logging.Debug.Println("Connect to ", cluster.Host)
 
 			var chUser, chPass string
 
@@ -150,7 +146,6 @@ func main() {
 				}
 
 			}
-			logging.Debug.Println("CH_USER: ", chUser)
 
 			// Connect to ClickHouse
 			ctx, conn, err := connect.Clickhouse(cluster.Host, cluster.Port, chUser, chPass, false)
@@ -160,9 +155,6 @@ func main() {
 				err := git.Clone(gitDest, source.GitRepo, source.GitBranch, gitPrivateKeyFile, verbose)
 				checkErr(err, runAsDaemon)
 				for _, path := range source.GitPaths {
-
-					// TODO remove the debug log
-					logging.Debug.Println("Apply: ", path)
 
 					// Apply SQL files
 					queriesDir := filepath.Join(gitDest, path)
