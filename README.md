@@ -39,21 +39,4 @@ make build-image
 ```
 
 ## Testing
-### Create server and apply queries:
-```bash
-make test-server-up
-```
-
-### Check logs
-```bash
-docker logs -f sql-cd
-```
-
-### Check result:
-```bash
-docker attach clickhouse-client
-```
-
-```sql
-select count() from system.tables;
-```
+Check the `tests/` directory.
