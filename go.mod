@@ -5,6 +5,7 @@ go 1.18
 require (
 	github.com/ClickHouse/clickhouse-go/v2 v2.2.0
 	github.com/go-git/go-git/v5 v5.4.2
+	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (

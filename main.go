@@ -9,12 +9,13 @@ import (
 	"time"
 
 	"github.com/orginux/sql-cd/cmd/apply"
+	"github.com/orginux/sql-cd/cmd/config"
 	connect "github.com/orginux/sql-cd/cmd/connection"
 	git "github.com/orginux/sql-cd/cmd/git"
 	logging "github.com/orginux/sql-cd/cmd/logging"
 )
 
-// DataBase variables
+// DB variables
 var (
 	dbHost                 string
 	dbPort                 int
@@ -36,6 +37,10 @@ var (
 	verbose     bool
 )
 
+var (
+	gitConfigLocal, gitConfigRemote string
+)
+
 func init() {
 	// connection
 	flag.StringVar(&dbHost, "db-host", "localhost", "The ClickHouse server name. You can use either the name or the IPv4 or IPv6 address")
@@ -52,6 +57,10 @@ func init() {
 	flag.StringVar(&gitPrivateKeyFile, "private-key-file", "/tmp/key", "Local path for the ssh private key")
 	// flag.StringVar(&gitDest, "git-dest", "", "local path for repo with SQL queries")
 
+	// config
+	flag.StringVar(&gitConfigRemote, "remote-config", "", "Path to config")
+	flag.StringVar(&gitConfigLocal, "local-config", "", "Path to config")
+
 	// daemon
 	flag.BoolVar(&runAsDaemon, "daemon", false, "Run as daemon")
 	flag.IntVar(&timeout, "timeout", 60, "Global command timeout")
@@ -61,43 +70,115 @@ func init() {
 }
 
 func main() {
-	gitDest := getWorkDirName(workDir, gitURL, gitBranch)
-
-	if verbose {
-		logging.Debug.Printf("gitDest: %s", gitDest)
-	}
-	queriesDir := filepath.Join(gitDest, gitPath)
+	var configMain config.Config
 
 	for {
-		// Connect to ClickHouse
-		ctx, conn, err := connect.Clickhouse(dbHost, dbPort, dbUsername, dbPassword, dbVerboseMode)
-		checkErr(err, runAsDaemon)
+		if gitConfigLocal != "" && gitConfigRemote != "" {
+			logging.Error.Fatalln("Choose only one configuration source")
+		}
 
-		// Clone project
-		err = git.Clone(gitDest, gitURL, gitBranch, gitPrivateKeyFile, verbose)
-		checkErr(err, runAsDaemon)
+		var configPath string
 
-		// Apply SQL files
-		err = apply.QueriesFromDir(ctx, conn, queriesDir, runAsDaemon)
-		checkErr(err, runAsDaemon)
+		if gitConfigLocal != "" || gitConfigRemote != "" {
 
-		// Close connection
-		conn.Close()
-		logging.Info.Println("Connection closed")
+			if gitConfigRemote != "" {
+				if gitURL == "" {
+					logging.Error.Fatalln("Please define Git URL via config file")
+				}
+				// Clone config
+				gitDest := getWorkDirName(workDir, gitURL, gitBranch)
+				err := git.Clone(gitDest, gitURL, gitBranch, gitPrivateKeyFile, verbose)
+				checkErr(err, runAsDaemon)
 
-		// Exit if run once
-		if !runAsDaemon {
-			os.Exit(0)
+				configPath = filepath.Join(gitDest, gitConfigRemote)
+			} else {
+				_, err := os.Stat(gitConfigLocal)
+				checkErr(err, runAsDaemon)
+				configPath = gitConfigLocal
+			}
+
+			var err error
+			configMain, err = config.ReadConfigFile(configPath)
+			checkErr(err, runAsDaemon)
+
+		} else {
+
+			// Generate config from cli parameters
+			configMain = config.Config{
+				[]config.Cluster{
+					config.Cluster{
+						Name: dbHost,
+						Host: dbHost,
+						Port: dbPort,
+						User: dbUsername,
+						Pass: dbPassword,
+						Sources: []config.Source{
+							config.Source{
+								GitRepo:   gitURL,
+								GitBranch: gitBranch,
+								GitPaths: []string{
+									gitPath,
+								},
+							},
+						},
+					},
+				},
+			}
+		}
+
+		for _, cluster := range configMain.Clusters {
+
+			var chUser, chPass string
+
+			if strings.HasPrefix(cluster.User, "$") || strings.HasPrefix(cluster.Pass, "$") {
+
+				if strings.HasPrefix(cluster.User, "$") {
+					chUserEnvName := strings.TrimPrefix(cluster.User, "$")
+					chUser = os.Getenv(chUserEnvName)
+				} else {
+					chUser = cluster.User
+				}
+				if strings.HasPrefix(cluster.Pass, "$") {
+					chPassEnvName := strings.TrimPrefix(cluster.Pass, "$")
+					chPass = os.Getenv(chPassEnvName)
+				} else {
+					chPass = cluster.Pass
+				}
+
+			}
+
+			// Connect to ClickHouse
+			ctx, conn, err := connect.Clickhouse(cluster.Host, cluster.Port, chUser, chPass, false)
+			checkErr(err, runAsDaemon)
+			for _, source := range cluster.Sources {
+				gitDest := getWorkDirName(workDir, gitURL, gitBranch)
+				err := git.Clone(gitDest, source.GitRepo, source.GitBranch, gitPrivateKeyFile, verbose)
+				checkErr(err, runAsDaemon)
+				for _, path := range source.GitPaths {
+
+					// Apply SQL files
+					queriesDir := filepath.Join(gitDest, path)
+					err = apply.QueriesFromDir(ctx, conn, queriesDir, runAsDaemon)
+					checkErr(err, runAsDaemon)
+				}
+				// Close connection
+				conn.Close()
+				logging.Info.Printf("%s connection closed", cluster.Host)
+			}
+
 		}
 
 		// Wait before next iteration
 		if verbose {
 			logging.Debug.Printf("Timeout %d sec\n", timeout)
 		}
+		// TODO read the value form config
 		time.Sleep(time.Duration(timeout) * time.Second)
+
 	}
 }
 
+// Generate a work dir path
 func getWorkDirName(subPaths ...string) string {
 
 	var path string

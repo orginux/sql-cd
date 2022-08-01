@@ -14,5 +14,10 @@
 
             <access_management>1</access_management>
         </admin>
+        <default>
+            <!-- Avoid using the default user without a password. -->
+            <password>strongPass11</password>
+            <access_management>0</access_management>
+        </default>
     </users>
 </clickhouse>
